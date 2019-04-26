@@ -110,6 +110,8 @@ A vector is a similar collection type provided by the standard library that is a
 
 Array types are written like `let a: [i32; 5] = [1, 2, 3, 4, 5];`. Can be initialized similarly: `let a = [3; 5];`
 
+Arrays can be sliced like `let nice_slice = &a[1..3]; // [2, 3, 4]`
+
 ### Functions
 
 `fn` allows you to declare new functions. Function names are snake_case. Rust doesn’t care where you define your functions, only that they’re defined somewhere.
