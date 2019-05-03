@@ -4,6 +4,11 @@
   - [Data Types](#data-types)
   - [Functions](#functions)
   - [Control flow](#control-flow)
+- [Understanding Ownership](#understanding-ownership)
+  - [Stack and Heap](#stack-and-heap)
+  - [Ownership](#ownership)
+  - [References and Borrowing](#references-and-borrowing)
+  - [The Slice Type](#the-slice-type)
 
 ## Getting started
 
@@ -152,3 +157,86 @@ for element in a.iter() {
 ```
 
 Iterate through a range: `for number in (1..4) { // ... }`
+
+## Understanding Ownership
+
+### Stack and Heap
+
+Stack and the heap are parts of memory that are available to your code to use at runtime.
+
+Stack is LIFO. All data stored there must have a known, fixed size.
+
+Heap is less structured. When you put data there, the system finds an empty spot somewhere in the heap that is big enough, marks it as being in use, and returns a pointer, which is the address of that location. This is _allocating_.
+
+Pushing to the stack is faster than allocating on the heap, likewise, accessing data in the heap is slower.
+
+When your code calls a function, the values passed into the function (including, potentially, pointers to data on the heap) and the function’s local variables get pushed onto the stack. When the function is over, those values get popped off the stack.
+
+### Ownership
+
+Each value in Rust has a variable that’s called its _owner_.
+
+There can only be one owner at a time.
+
+When the owner goes out of scope, the value will be dropped.
+
+`String` is different from a string literal. It can be mutated and is allocated on the heap. Rust automatically returns memory once the variable that owns it goes out of scope (Rust calls a `drop` method at that point).
+
+```
+let s1 = String::from("hello");
+let s2 = s1;
+
+println!("{}, world!", s1); // error!
+```
+
+When we do this, only `String` pointer, length and capacity are passed to `s2`, this is on the stack. We do not copy the data on the heap. To avoid _double free_ error (trying to free memory twice), Rust invalidates `s1` when it's _copied_ to `s2`. So it's not actually copied, it's **moved**. Rust will never automatically create “deep” copies.
+
+Deep copy of the heap data can be done using `clone` method.
+
+```
+let x = 5;
+let y = x;
+
+println!("x = {}, y = {}", x, y); // x is still valid
+```
+
+Types that have a known size at compile time are stored on the stack and can be copied inexpensively, so `x` is not moved into `y` and is still valid.
+
+Rust has a special annotation called the Copy trait that we can place on types like integers that are stored on the stack. If a type has the Copy trait, an older variable is still usable after assignment. Rust won’t let us annotate a type with the Copy trait if the type, or any of its parts, has implemented the Drop trait. _(I don't understand shit about this)_
+
+Passing a variable to a function will move or copy, just as assignment does.
+
+```
+let s = String::from("hello");  // s comes into scope
+
+takes_ownership(s);             // s's value moves into the function...
+                                // ... and so is no longer valid here
+
+let x = 5;                      // x comes into scope
+
+makes_copy(x);                  // x would move into the function, but i32 is Copy, so it’s okay to still use x afterward
+```
+
+### References and Borrowing
+
+If we want to let a function use a value but not take ownership, we can pass a _reference_ using `&`:
+
+```
+fn main() {
+    let s1 = String::from("hello");
+
+    let len = calculate_length(&s1);
+
+    println!("The length of '{}' is {}.", s1, len);
+}
+```
+
+Having references as function parameters is called _borrowing_. We cannot modify a borrowed value because by default is immutable, like variables.
+
+To be able to modify it, we must add `mut` both to the variable and the reference. You can have only one mutable reference to a particular piece of data in a particular scope. This restriction prevents data races.
+
+### The Slice Type
+
+A string slice is a reference to part of a String, and it looks like `let hello = &s[0..5];`. Can also be done with arrays.
+
+The type that signifies “string slice” is written as `&str`. String literals are slices 🤯
