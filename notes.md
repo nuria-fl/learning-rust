@@ -9,6 +9,11 @@
   - [Ownership](#ownership)
   - [References and Borrowing](#references-and-borrowing)
   - [The Slice Type](#the-slice-type)
+- [Structs](#structs)
+  - [Derived traits](#derived-traits)
+  - [Methods](#methods)
+  - [Associated functions](#associated-functions)
+- [Enums](#enums)
 
 ## Getting started
 
@@ -240,3 +245,93 @@ To be able to modify it, we must add `mut` both to the variable and the referenc
 A string slice is a reference to part of a String, and it looks like `let hello = &s[0..5];`. Can also be done with arrays.
 
 The type that signifies “string slice” is written as `&str`. String literals are slices 🤯
+
+## Structs
+
+A Struct is custom data type that lets you name and package together multiple related values:
+
+```
+struct User {
+  username: String,
+  email: String,
+  sign_in_count: u64,
+  active: bool,
+}
+```
+
+After defining it we create an instance defining the values:
+
+```
+let user1 = User {
+  email: String::from("someone@example.com"),
+  username: String::from("someusername123"),
+  active: true,
+  sign_in_count: 1,
+};
+```
+
+Fields can be accessed by dot notation. The entire instance can be mutable, but not only specific fields.
+
+You can create an instance that uses most of another instance values by using struct update syntax:
+
+```
+let user2 = User {
+    email: String::from("another@example.com"),
+    username: String::from("anotherusername567"),
+    ..user1
+};
+```
+
+You can use tuple structs: `struct Color(i32, i32, i32);`
+
+### Derived traits
+
+Adding stuff `#[derive(Debug)]` before a struct definition allows us to add more functionality. Rust provides a [number of traits](https://doc.rust-lang.org/book/appendix-03-derivable-traits.html) to be used with the `derive` annotation.
+
+### Methods
+
+A method is a function defined within the context of a struct, to add functionality related to the struct. They always receive _self_ as their first parameter:
+
+```
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+}
+```
+
+### Associated functions
+
+We can define functions in `impl` that don't take `self` as a parameter. To call associated functions, use `::` syntax.
+
+## Enums
+
+Enums are used to represent a _thing_ that can only be one of its variants (for example, an enum to work with IP addresses that can be v4 or v6). Used like:
+
+```
+enum IpAddr {
+    V4(String),
+    V6(String),
+}
+
+let four = IpAddr::V4(String::from("127.0.0.1"));
+let six = IpAddr::V6(String::from("::1"));
+```
+
+Each variant can have different types and amounts of associated data, like `V4(u8, u8, u8, u8)` and `V6(String)`
+
+Methods can also be defined for enums the same way as with structs, using `impl`
+
+`Option` is an enum defined by the standard library that allows us to work with a value that could be something or it could be nothing. Rust doesn't have _null_.
+
+```
+enum Option<T> {
+    Some(T),
+    None,
+}
+```
