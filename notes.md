@@ -13,7 +13,10 @@
   - [Derived traits](#derived-traits)
   - [Methods](#methods)
   - [Associated functions](#associated-functions)
-- [Enums](#enums)
+- [Enums and Pattern Matching](#enums-and-pattern-matching)
+  - [Enums](#enums)
+  - [`match`](#match)
+  - [`if let`](#if-let)
 
 ## Getting started
 
@@ -309,7 +312,9 @@ impl Rectangle {
 
 We can define functions in `impl` that don't take `self` as a parameter. To call associated functions, use `::` syntax.
 
-## Enums
+## Enums and Pattern Matching
+
+### Enums
 
 Enums are used to represent a _thing_ that can only be one of its variants (for example, an enum to work with IP addresses that can be v4 or v6). Used like:
 
@@ -333,5 +338,58 @@ Methods can also be defined for enums the same way as with structs, using `impl`
 enum Option<T> {
     Some(T),
     None,
+}
+```
+
+### `match`
+
+The `match` operator compares a value against a series of patterns and runs the code of the first pattern matched.
+
+```
+enum Coin {
+    Penny,
+    Nickel,
+    Dime,
+    Quarter,
+}
+
+fn value_in_cents(coin: Coin) -> u8 {
+    match coin {
+        Coin::Penny => 1,
+        Coin::Nickel => 5,
+        Coin::Dime => 10,
+        Coin::Quarter => 25,
+    }
+}
+```
+
+Match arms can bind to values, for example to work with the `Option<T>` enum mentioned before:
+
+```
+match x {
+    None => None,
+    Some(i) => Some(i + 1),
+}
+```
+
+Matches need to cover all possible cases. `_` can be used as a placeholder for all the other cases we don't want/need to cover:
+
+```
+let some_u8_value = 0u8;
+match some_u8_value {
+    3 => println!("three"),
+    _ => println!("other number");,
+}
+```
+
+### `if let`
+
+`match` can be a bit verbose if we only care about one case. In this cases we can use `if let`:
+
+```
+if let Some(3) = some_u8_value {
+    println!("three");
+} else {
+    println!("other number");
 }
 ```
