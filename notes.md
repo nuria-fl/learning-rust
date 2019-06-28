@@ -17,6 +17,9 @@
   - [Enums](#enums)
   - [`match`](#match)
   - [`if let`](#if-let)
+- [Packages, Crates and Modules](packages-crates-and-modules)
+  - [Packages and Crates](packages-and-crates)
+  - [Modules](modules)
 
 ## Getting started
 
@@ -393,3 +396,52 @@ if let Some(3) = some_u8_value {
     println!("other number");
 }
 ```
+
+## Packages, Crates and Modules
+
+### Packages and Crates
+
+A crate is a binary or library. A package is one or more crates that provide a set of functionality (a package contains a `Cargo.toml`). A package can _only_ contain 1 library. It can contain as many binary crates as you’d like, but it must contain at least one crate (either library or binary).
+
+The crate root is either the `src/main.rs` or `src/lib.rs`. If a package contains src/main.rs and src/lib.rs, it has two crates: a library and a binary.
+
+A package can have multiple binary crates by placing files in the src/bin directory (one file per crate).
+
+### Modules
+
+Modules are defined by `mod` keyword followed by the name of the module, with its contents wrapped in curly braces or, if the module is in its own file, as a statement: `mod module_name;`
+
+A module tree :
+
+```
+crate
+ └── front_of_house
+     ├── hosting
+     │   ├── add_to_waitlist
+     │   └── seat_at_table
+     └── serving
+         ├── take_order
+         ├── serve_order
+         └── take_payment
+```
+
+To call a module function from another file we need to know its path. Absolute paths start from the crate root and use the crate name or a literal `crate`. Relative paths start from the current module and use `self` (to be used with `use`, explained later), `super` (would be like the `..` of a filesystem path), or an identifier in the current module.
+
+All items in a module are private by default. You can expose them using `pub`. It must be added case per case, including the fields in a struct. Enums variants are public by default.
+
+You can bring modules into the scope with `use`, so you don't have to call the whole path each time you want to use a function.
+
+The idiomatic way to bring a function into scope is not to use the full path, so you can see where it's defined. However, with structs and enums, the full path is used _shrug_
+
+If we’re bringing two items with the same name into scope we avoid to use the full path, or provide a new name with the `as` keyword:
+
+```
+use std::fmt::Result;
+use std::io::Result as IoResult;
+```
+
+When we bring a name into scope with `use`, it's private. We can re-export it combining `pub use`
+
+To bring multiple items from the same module, we can combine it into a single line like: `use std::{cmp::Ordering, io};`
+
+With the glob operator `*` we can bring all the module items: `use std::collections::*;` (might not be a good idea as it makes it more difficult to know what is in the scope and where is defined)
