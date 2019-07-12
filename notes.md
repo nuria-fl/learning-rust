@@ -20,6 +20,9 @@
 - [Packages, Crates and Modules](packages-crates-and-modules)
   - [Packages and Crates](packages-and-crates)
   - [Modules](modules)
+- [Concurrency](concurrency)
+  - [Threads](threads)
+  - [Transfer data between threads](transfer-data-between-threads)
 
 ## Getting started
 
@@ -445,3 +448,75 @@ When we bring a name into scope with `use`, it's private. We can re-export it co
 To bring multiple items from the same module, we can combine it into a single line like: `use std::{cmp::Ordering, io};`
 
 With the glob operator `*` we can bring all the module items: `use std::collections::*;` (might not be a good idea as it makes it more difficult to know what is in the scope and where is defined)
+
+## Concurrency
+
+Concurrent programming: different parts of a program execute **independently**
+Parallel programming: different parts of a program execute **at the same time**
+
+To keep it simple the chapter refers to both as _concurrency_.
+
+### Threads
+
+Multiple threads can improve performance because the program does multiple tasks at the same time, but can also lead to problems as race conditions, deadlocks (where two threads are waiting for each other to finish using a resource the other thread has, preventing both threads from continuing), and other bugs.
+
+Rust standard library only provides an implementation of 1:1 threading (the language calls the operating system APIs to create threads, meaning one operating system thread per one language thread). (I'm not really understanding the 1:1 threading vs M:N but I hope it will make sense in the future)
+
+You can create a new thread using `thread::spawn` and pass it a closure containing the code we want to run in the new thread (closures are explained in Chapter 13 which I skipped YOLO).
+
+```
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    thread::spawn(|| {
+        for i in 1..10 {
+            println!("hi number {} from the spawned thread!", i);
+            thread::sleep(Duration::from_millis(1));
+        }
+    });
+
+    for i in 1..5 {
+        println!("hi number {} from the main thread!", i);
+        thread::sleep(Duration::from_millis(1));
+    }
+}
+```
+
+With this code the new thread will be stopped when the main thread ends, whether or not it has finished running, and there is no guarantee on the order in which threads run, or that the spawned thread will get to run at all.
+
+`thread::spawn` returns a `JoinHandle`, an owned value that when we call the `join` method, it will wait for its thread to finish.
+
+Calling `join` on the handle **blocks** the thread currently running.
+
+Adding the `move` keyword before the closure forces it to take ownership of the values it's using.
+
+```
+let v = vec![1, 2, 3];
+
+let handle = thread::spawn(move || {
+    println!("Here's a vector: {:?}", v);
+});
+
+handle.join().unwrap();
+```
+
+### Transfer data between threads
+
+We can pass messages between threads using a _channel_. A channel has two parts: a transmitter and a receiver.
+
+We create a new channel using `mpsc::channel`. `mpsc` stands for _multiple producer, single consumer_. It returns a tuple `(tx, rx)` (_transmitter_, _receiver_).
+
+You can send messages using `tx.send(val)` (returns a `Result<T, E>`, so it returns an error if the receiving end has been dropped).
+
+To receive messages, use `rx.recv()`, which blocks the main thread and waits for a value, or `rx.try_recv`, that doesn't block. Both return `Result<T, E>`.
+
+`rx` can be treates as an iterator too, like:
+
+```
+for received in rx {
+    println!("Got: {}", received);
+}
+```
+
+You can clone the transmitter to be able to send messages from multiple threads to the same receiver: `let tx1 = mpsc::Sender::clone(&tx);`
