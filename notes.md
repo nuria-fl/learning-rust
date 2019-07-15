@@ -503,6 +503,8 @@ handle.join().unwrap();
 
 ### Transfer data between threads
 
+#### Message passing
+
 We can pass messages between threads using a _channel_. A channel has two parts: a transmitter and a receiver.
 
 We create a new channel using `mpsc::channel`. `mpsc` stands for _multiple producer, single consumer_. It returns a tuple `(tx, rx)` (_transmitter_, _receiver_).
@@ -520,3 +522,11 @@ for received in rx {
 ```
 
 You can clone the transmitter to be able to send messages from multiple threads to the same receiver: `let tx1 = mpsc::Sender::clone(&tx);`
+
+#### Shared-state
+
+Shared memory concurrency is like multiple ownership. This can be achieved using a _mutex_ (mutual exclusion). To access the data, a thread first asks to acquire the mutex _lock_ (a lock keeps track of who currently has exclusive access to the data). After using the data, you must unlock it.
+
+To be able to have multiple ownership we need to Use `Arc<T>`, stands for _atomically reference counted_. It's similar to `Rc<T>`, but intended to be used in concurrent situations (comes with a performance cost, and we don't need it in single threads).
+
+Warning! `Mutex<T>` comes with the risk of creating deadlocks.
